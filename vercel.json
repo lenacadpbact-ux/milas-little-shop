@@ -1,0 +1,9 @@
+```json
+{
+  "functions": {
+    "api/classify.py": {
+      "runtime": "python3.11"
+    }
+  }
+}
+```
