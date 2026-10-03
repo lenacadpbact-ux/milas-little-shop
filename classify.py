@@ -7,7 +7,7 @@ import joblib
 import numpy as np
 import scipy.sparse as sp
 import litellm
-
+  "final_label": CATEGORY_LABELS.get(final_uid, final_uid),
 BASE_DIR = os.path.dirname(__file__)
 
 # Vercel Blob authentication
@@ -183,12 +183,12 @@ def classify_title(title, country='USA'):
     )
 
     return {
-        "final_uid": final_uid,
-        "final_label": CATEGORY_LABELS.get(final_uid, final_uid),
-        "pipeline_a": pipeline_a_result,
-        "pipeline_b": pipeline_b_result,
-        "signal_strength": signal_strength,
-        "agreed": agreed
+        "final_uid": str(final_uid),
+        "final_label": str(CATEGORY_LABELS.get(final_uid, final_uid)),
+        "pipeline_a": str(pipeline_a_result),
+        "pipeline_b": str(pipeline_b_result),
+        "signal_strength": int(signal_strength),
+        "agreed": bool(agreed)
     }
 
 class handler(BaseHTTPRequestHandler):
