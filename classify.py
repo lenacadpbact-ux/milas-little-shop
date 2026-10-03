@@ -206,7 +206,7 @@ class handler(BaseHTTPRequestHandler):
             )
             return
 
-        result = classify_title(title, country)
+        result = {"received_title": title, "received_country": country}
 
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
