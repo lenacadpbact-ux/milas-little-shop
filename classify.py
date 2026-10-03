@@ -204,10 +204,9 @@ class handler(BaseHTTPRequestHandler):
         title = query.get('title', [''])[0]
         country = query.get('country', ['USA'])[0]
 
-        if not title:
-            body = json.dumps(
-                {"error": "Missing 'title' parameter"}
-            ).encode("utf-8")
+            result = classify_title(title, country)
+
+            body = json.dumps(result, default=str).encode("utf-8")
 
             self.send_response(400)
             self.send_header("Content-Type", "application/json")
