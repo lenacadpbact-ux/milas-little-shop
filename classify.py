@@ -196,21 +196,26 @@ class handler(BaseHTTPRequestHandler):
         country = query.get('country', ['USA'])[0]
 
         if not title:
+            body = json.dumps(
+                {"error": "Missing 'title' parameter"}
+            ).encode("utf-8")
+
             self.send_response(400)
-            self.send_header('Content-Type', 'application/json')
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
             self.end_headers()
-            self.wfile.write(
-                json.dumps(
-                    {"error": "Missing 'title' parameter"}
-                ).encode("utf-8")
-            )
+            self.wfile.write(body)
+            self.wfile.flush()
             return
 
-        result = {"received_title": title, "received_country": country}
+        body = json.dumps({
+            "received_title": title,
+            "received_country": country
+        }).encode("utf-8")
 
         self.send_response(200)
-        self.send_header('Content-Type', 'application/json')
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
         self.end_headers()
-        self.wfile.write(
-            json.dumps(result).encode("utf-8")
-        )
+        self.wfile.write(body)
+        self.wfile.flush()
