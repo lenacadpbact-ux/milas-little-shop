@@ -193,6 +193,7 @@ def classify_title(title, country='USA'):
 
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
+        print("CELM API REQUEST RECEIVED")
         from urllib.parse import urlparse, parse_qs
 
         query = parse_qs(urlparse(self.path).query)
