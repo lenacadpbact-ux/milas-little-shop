@@ -7,8 +7,12 @@ import scipy.sparse as sp
 import litellm
 
 BASE_DIR = os.path.dirname(__file__)
-vectorizer = joblib.load(os.path.join(BASE_DIR, "../model/tfidf_vectorizer.joblib"))
-rf_model = joblib.load(os.path.join(BASE_DIR, "../model/celm_rf_model.joblib"))
+
+BLOB_READ_WRITE_TOKEN = os.environ["BLOB_READ_WRITE_TOKEN"]
+
+rf_model = joblib.load(
+    os.path.join(BASE_DIR, "../model/random_forest.joblib")
+)
 
 # --------------------------------------------------
 # AWS Bedrock credentials — set these in Vercel's
