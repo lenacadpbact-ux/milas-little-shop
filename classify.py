@@ -178,8 +178,12 @@ def classify_title(title, country='USA'):
     pipeline_b_result = predict_pipeline_b(title, signal_strength)
 
     agreed = (pipeline_a_result == pipeline_b_result)
+
     final_uid = pipeline_a_result if agreed else predict_llm_tiebreaker(
-        title, pipeline_a_result, pipeline_b_result, signal_strength
+        title,
+        pipeline_a_result,
+        pipeline_b_result,
+        signal_strength
     )
 
     return {
@@ -194,6 +198,7 @@ def classify_title(title, country='USA'):
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
         print("CELM API REQUEST RECEIVED")
+
         from urllib.parse import urlparse, parse_qs
 
         query = parse_qs(urlparse(self.path).query)
@@ -201,25 +206,26 @@ class handler(BaseHTTPRequestHandler):
         country = query.get('country', ['USA'])[0]
 
         if not title:
-            body = json.dumps(
-                {"error": "Missing 'title' parameter"}
-            ).encode("utf-8")
+            body = json.dumps({
+                "error": "Missing 'title' parameter"
+            }).encode("utf-8")
 
             self.send_response(400)
-            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
             self.wfile.write(body)
             self.wfile.flush()
             return
 
-        body = json.dumps({
-            "received_title": title,
-            "received_country": country
-        }).encode("utf-8")
+        result = classify_title(title, country)
+
+        print("CELM RESULT:", repr(result))
+
+        body = json.dumps(result, default=str).encode("utf-8")
 
         self.send_response(200)
-        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
