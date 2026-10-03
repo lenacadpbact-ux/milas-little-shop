@@ -189,17 +189,28 @@ def classify_title(title, country='USA'):
 
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
+        from urllib.parse import urlparse, parse_qs
+
+        query = parse_qs(urlparse(self.path).query)
+        title = query.get('title', [''])[0]
+        country = query.get('country', ['USA'])[0]
+
+        if not title:
+            self.send_response(400)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(
+                json.dumps(
+                    {"error": "Missing 'title' parameter"}
+                ).encode()
+            )
+            return
+
+        result = classify_title(title, country)
+
         self.send_response(200)
-        self.send_header('Content-Type', 'application/json')
+        self.send_header('Content-type', 'application/json')
         self.end_headers()
-
-        response = {
-            "status": "API is working",
-            "message": "Hello from CELM",
-            "title": "The Very Hungry Caterpillar",
-            "country": "USA"
-        }
-
         self.wfile.write(
-            json.dumps(response).encode("utf-8")
+            json.dumps(result).encode()
         )
