@@ -198,7 +198,6 @@ def classify_title(title, country='USA'):
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
         print("CELM API REQUEST RECEIVED")
-
         from urllib.parse import urlparse, parse_qs
 
         query = parse_qs(urlparse(self.path).query)
@@ -206,12 +205,12 @@ class handler(BaseHTTPRequestHandler):
         country = query.get('country', ['USA'])[0]
 
         if not title:
-            body = json.dumps({
-                "error": "Missing 'title' parameter"
-            }).encode("utf-8")
+            body = json.dumps(
+                {"error": "Missing 'title' parameter"}
+            ).encode("utf-8")
 
             self.send_response(400)
-            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
             self.wfile.write(body)
@@ -225,7 +224,7 @@ class handler(BaseHTTPRequestHandler):
         body = json.dumps(result, default=str).encode("utf-8")
 
         self.send_response(200)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
