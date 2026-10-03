@@ -197,20 +197,20 @@ class handler(BaseHTTPRequestHandler):
 
         if not title:
             self.send_response(400)
-            self.send_header('Content-type', 'application/json')
+            self.send_header('Content-Type', 'application/json')
             self.end_headers()
             self.wfile.write(
                 json.dumps(
                     {"error": "Missing 'title' parameter"}
-                ).encode()
+                ).encode("utf-8")
             )
             return
 
         result = classify_title(title, country)
 
         self.send_response(200)
-        self.send_header('Content-type', 'application/json')
+        self.send_header('Content-Type', 'application/json')
         self.end_headers()
         self.wfile.write(
-            json.dumps(result).encode()
+            json.dumps(result).encode("utf-8")
         )
