@@ -8,10 +8,12 @@ import litellm
 
 BASE_DIR = os.path.dirname(__file__)
 
+# Vercel Blob authentication
 BLOB_READ_WRITE_TOKEN = os.environ["BLOB_READ_WRITE_TOKEN"]
 
-rf_model = joblib.load(
-    os.path.join(BASE_DIR, "../model/random_forest.joblib")
+# TF-IDF vectorizer — stored in GitHub
+vectorizer = joblib.load(
+    os.path.join(BASE_DIR, "../model/celm_tfidf_vectorizer.joblib")
 )
 
 # --------------------------------------------------
