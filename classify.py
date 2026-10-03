@@ -1,6 +1,8 @@
 from http.server import BaseHTTPRequestHandler
 import json
 import os
+import io
+import urllib.request
 import joblib
 import numpy as np
 import scipy.sparse as sp
@@ -15,6 +17,34 @@ BLOB_READ_WRITE_TOKEN = os.environ["BLOB_READ_WRITE_TOKEN"]
 vectorizer = joblib.load(
     os.path.join(BASE_DIR, "../model/celm_tfidf_vectorizer.joblib")
 )
+
+# ============================================================
+# Random Forest model — stored in PRIVATE Vercel Blob
+# ============================================================
+
+BLOB_URL = (
+    "https://itf8egqp4iag2pr5.private.blob.vercel-storage.com/"
+    "celm_rf_model.joblib"
+)
+
+request = urllib.request.Request(
+    BLOB_URL,
+    headers={
+        "Authorization": f"Bearer {BLOB_READ_WRITE_TOKEN}"
+    }
+)
+
+with urllib.request.urlopen(request) as response:
+    rf_model_bytes = response.read()
+
+rf_model = joblib.load(
+    io.BytesIO(rf_model_bytes)
+)
+
+# --------------------------------------------------
+# AWS Bedrock credentials — set these in Vercel's
+# Environment Variables dashboard, NOT here.
+# --------------------------------------------------
 
 # --------------------------------------------------
 # AWS Bedrock credentials — set these in Vercel's
