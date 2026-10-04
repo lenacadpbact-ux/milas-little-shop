@@ -7,12 +7,12 @@ import urllib.request
 import joblib
 import numpy as np
 import scipy.sparse as sp
-import litellm
 
-print("AWS env present:", {k: bool(os.environ.get(k)) for k in
-      ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_DEFAULT_REGION", "AWS_SESSION_TOKEN"]})
+BEDROCK_KEY = os.environ.get("CELM_BEDROCK_KEY", "").strip()
+print("CELM Bedrock key present:", bool(BEDROCK_KEY))
 
-BASE_DIR = os.path.dirname(__file__)
+BEDROCK_MODEL_ID = "us.amazon.nova-lite-v1:0"
+BEDROCK_URL = f"https://bedrock-runtime.{AWS_REGION}.amazonaws.com/model/{BEDROCK_MODEL_ID}/converse"
 
 # --------------------------------------------------
 # Load models (vectorizer + encoder from GitHub, forest from private Blob)
@@ -161,21 +161,29 @@ def predict_llm_tiebreaker(title, uid_a, uid_b, signal_strength):
         f"two candidates is correct, or select a different Universal ID if neither fits.\n"
         f"Return ONLY the Universal ID."
     )
+    body = json.dumps({
+        "system": [{"text": tie_break_prompt}],
+        "messages": [{"role": "user", "content": [{"text": f'Title: "{title}"'}]}],
+        "inferenceConfig": {"maxTokens": 10, "temperature": 0.0},
+    }).encode()
+    req = urllib.request.Request(
+        BEDROCK_URL, data=body, method="POST",
+        headers={"Content-Type": "application/json",
+                 "Authorization": f"Bearer {BEDROCK_KEY}"},
+    )
     try:
-        r = litellm.completion(
-            model=LLM_MODEL,
-            messages=[{'role': 'system', 'content': tie_break_prompt},
-                      {'role': 'user', 'content': f'Title: "{title}"'}],
-            max_tokens=10,
-            temperature=0.0,
-            aws_region_name=AWS_REGION,
-        )
-        uid = to_bracketed(r.choices[0].message.content.strip().split('\n')[0])
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            out = json.loads(resp.read())
+        text = out["output"]["message"]["content"][0]["text"]
+        uid = to_bracketed(text.strip().split("\n")[0])
         if uid in VALID_UIDS:
             return uid, "ok"
         return uid_b, "invalid_response"
+    except urllib.error.HTTPError as e:
+        print(f"LLM HTTP error {e.code}: {e.read()[:200]}")
+        return uid_b, "error"
     except Exception as e:
-        print(f"LLM error: {str(e)[:300]}")
+        print(f"LLM error: {str(e)[:200]}")
         return uid_b, "error"
 
 # --------------------------------------------------
