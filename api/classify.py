@@ -9,6 +9,9 @@ import numpy as np
 import scipy.sparse as sp
 import litellm
 
+print("AWS env present:", {k: bool(os.environ.get(k)) for k in
+      ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_DEFAULT_REGION", "AWS_SESSION_TOKEN"]})
+
 BASE_DIR = os.path.dirname(__file__)
 
 # --------------------------------------------------
