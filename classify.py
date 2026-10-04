@@ -197,6 +197,7 @@ def classify_title(title, country='USA'):
 
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
+        print("=== CELM DEPLOYMENT TEST 2355 ===")
         print("CELM API REQUEST RECEIVED")
         from urllib.parse import urlparse, parse_qs
 
