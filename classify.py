@@ -195,35 +195,51 @@ def classify_title(title, country='USA'):
 
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
-        print("=== CELM DEPLOYMENT TEST 2355 ===")
-        print("CELM API REQUEST RECEIVED")
         from urllib.parse import urlparse, parse_qs
 
         query = parse_qs(urlparse(self.path).query)
         title = query.get('title', [''])[0]
         country = query.get('country', ['USA'])[0]
 
-            result = classify_title(title, country)
-
-            body = json.dumps(result, default=str).encode("utf-8")
+        if not title:
+            body = b'{"error":"Missing title parameter"}'
 
             self.send_response(400)
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
             self.wfile.write(body)
-            self.wfile.flush()
             return
 
-        result = classify_title(title, country)
+        try:
+            result = classify_title(title, country)
 
-        print("CELM RESULT:", repr(result))
+            response = {
+                "final_uid": str(result.get("final_uid")),
+                "final_label": str(result.get("final_label")),
+                "pipeline_a": str(result.get("pipeline_a")),
+                "pipeline_b": str(result.get("pipeline_b")),
+                "signal_strength": int(result.get("signal_strength")),
+                "agreed": bool(result.get("agreed"))
+            }
 
-        body = json.dumps(result, default=str).encode("utf-8")
+            body = json.dumps(response).encode("utf-8")
 
-        self.send_response(200)
-        self.send_header("Content-Type", "application/json")
-        self.send_header("Content-Length", str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
-        self.wfile.flush()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        except Exception as e:
+            print("CLASSIFICATION ERROR:", repr(e))
+
+            body = json.dumps({
+                "error": str(e)
+            }).encode("utf-8")
+
+            self.send_response(500)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
