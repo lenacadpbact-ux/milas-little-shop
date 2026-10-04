@@ -137,12 +137,10 @@ def predict_pipeline_b(title, signal_strength):
     tfidf_vec = vectorizer.transform([title])
     ss_norm = np.array([[signal_strength / 10.0]])
     full_vec = sp.hstack([tfidf_vec, ss_norm])
+
     prediction = rf_model.predict(full_vec)[0]
 
-    if isinstance(prediction, np.generic):
-        prediction = prediction.item()
-
-    return prediction
+    return str(prediction)
 
 def predict_llm_tiebreaker(title, uid_a, uid_b, signal_strength):
     tie_break_prompt = CELM_PROMPT + (
