@@ -2,6 +2,7 @@ from http.server import BaseHTTPRequestHandler
 import json
 import os
 import io
+import re
 import urllib.request
 import joblib
 import numpy as np
@@ -42,6 +43,19 @@ CATEGORY_LABELS = {
     '[BRD_04]': 'Brand-Specific',
     '[GEN_05]': 'General',
 }
+
+# AWS region: read from AWS_DEFAULT_REGION and validate it, without ever
+# printing the value (so a misplaced secret can't leak into the logs)
+_region = os.environ.get("AWS_DEFAULT_REGION", "us-east-1").strip()
+if re.fullmatch(r"[a-z]{2}-[a-z]+-\d", _region):
+    AWS_REGION = _region
+else:
+    print("Warning: AWS_DEFAULT_REGION is not a valid region; using us-east-1")
+    AWS_REGION = "us-east-1"
+
+# Used only if the encoder file is missing: LabelEncoder sorts labels
+# alphabetically, so 0..4 map to this order (verify against your notebook)
+FALLBACK_CLASSES = ['BRD_04', 'EDU_01', 'EMO_03', 'GEN_05', 'TOP_02']
 
 # --------------------------------------------------
 # PIPELINE A — signal dictionaries (from Experiment 4 script)
@@ -115,9 +129,16 @@ def to_bracketed(label):
     return s if s.startswith('[') else '[' + s + ']'
 
 def decode_prediction(pred):
-    if label_encoder is not None and isinstance(pred, (int, np.integer)):
-        return to_bracketed(label_encoder.inverse_transform([pred])[0])
-    return to_bracketed(pred)
+    s = str(pred).strip()
+    if s.startswith('['):
+        return s
+    if s.isdigit():
+        idx = int(s)
+        if label_encoder is not None:
+            return to_bracketed(label_encoder.inverse_transform([idx])[0])
+        if idx < len(FALLBACK_CLASSES):
+            return to_bracketed(FALLBACK_CLASSES[idx])
+    return to_bracketed(s)
 
 def predict_pipeline_b(title, signal_strength):
     tfidf_vec = vectorizer.transform([title])
@@ -144,13 +165,14 @@ def predict_llm_tiebreaker(title, uid_a, uid_b, signal_strength):
                       {'role': 'user', 'content': f'Title: "{title}"'}],
             max_tokens=10,
             temperature=0.0,
+            aws_region_name=AWS_REGION,
         )
         uid = to_bracketed(r.choices[0].message.content.strip().split('\n')[0])
         if uid in VALID_UIDS:
             return uid, "ok"
         return uid_b, "invalid_response"
     except Exception as e:
-        print(f"LLM error: {str(e)[:100]}")
+        print(f"LLM error: {str(e)[:300]}")
         return uid_b, "error"
 
 # --------------------------------------------------
@@ -161,7 +183,7 @@ def classify_title(title, country='USA'):
     a = predict_pipeline_a(title, country)
     b = predict_pipeline_b(title, signal_strength)
 
-    # Guard: stop here if Pipeline B returned something that isn't a valid UID
+    # Guard: stop if Pipeline B returned something that isn't a valid UID
     if b not in VALID_UIDS:
         raise ValueError(f"Unexpected Pipeline B output: {b}")
 
@@ -215,5 +237,5 @@ class handler(BaseHTTPRequestHandler):
             print(json.dumps(result, ensure_ascii=False))   # request log for monitoring
             self._send(200, result)
         except Exception as e:
-            print(f"Classification error: {str(e)[:200]}")
+            print(f"Classification error: {str(e)[:300]}")
             self._send(500, {"error": "Classification failed. Please try again."})
