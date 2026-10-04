@@ -204,11 +204,13 @@ def classify_title(title, country='USA'):
         final_uid, llm_status = a, "not_needed"
         note = "Both pipelines agreed on this category."
     else:
-        final_uid, llm_status = predict_llm_tiebreaker(title, a, b, signal_strength)
+        llm_uid, llm_status = predict_llm_tiebreaker(title, a, b, signal_strength)
         if llm_status == "ok":
+            final_uid = llm_uid
             note = "The pipelines disagreed, so a language model made the final call."
         else:
-            note = "The pipelines disagreed and the language model was unavailable, so the data-driven result was used."
+            final_uid = a
+            note = "The pipelines disagreed and the language model was unavailable, so the rule-based result was used."
 
     return {
         "title": title,
