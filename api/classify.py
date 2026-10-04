@@ -160,6 +160,11 @@ def classify_title(title, country='USA'):
     signal_strength = calculate_signal_strength(title, country)
     a = predict_pipeline_a(title, country)
     b = predict_pipeline_b(title, signal_strength)
+
+    # Guard: stop here if Pipeline B returned something that isn't a valid UID
+    if b not in VALID_UIDS:
+        raise ValueError(f"Unexpected Pipeline B output: {b}")
+
     agreed = (a == b)
 
     if agreed:
