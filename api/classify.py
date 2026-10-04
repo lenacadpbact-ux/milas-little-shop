@@ -4,39 +4,16 @@ import os
 import io
 import re
 import urllib.request
+import urllib.error
 import joblib
 import numpy as np
 import scipy.sparse as sp
 
-BEDROCK_KEY = os.environ.get("CELM_BEDROCK_KEY", "").strip()
-print("CELM Bedrock key present:", bool(BEDROCK_KEY))
-
-BEDROCK_MODEL_ID = "us.amazon.nova-lite-v1:0"
-BEDROCK_URL = f"https://bedrock-runtime.{AWS_REGION}.amazonaws.com/model/{BEDROCK_MODEL_ID}/converse"
-
-# --------------------------------------------------
-# Load models (vectorizer + encoder from GitHub, forest from private Blob)
-# --------------------------------------------------
-BLOB_READ_WRITE_TOKEN = os.environ["BLOB_READ_WRITE_TOKEN"]
-
-vectorizer = joblib.load(os.path.join(BASE_DIR, "../model/celm_tfidf_vectorizer.joblib"))
-
-ENCODER_PATH = os.path.join(BASE_DIR, "../model/celm_label_encoder.joblib")
-label_encoder = joblib.load(ENCODER_PATH) if os.path.exists(ENCODER_PATH) else None
-
-BLOB_URL = "https://itf8egqp4iag2pr5.private.blob.vercel-storage.com/celm_rf_model.joblib"
-_req = urllib.request.Request(BLOB_URL, headers={"Authorization": f"Bearer {BLOB_READ_WRITE_TOKEN}"})
-with urllib.request.urlopen(_req) as _resp:
-    _rf_bytes = _resp.read()
-rf_model = joblib.load(io.BytesIO(_rf_bytes))
-del _rf_bytes
-
-print("RF classes:", list(rf_model.classes_), "| encoder loaded:", label_encoder is not None)
+BASE_DIR = os.path.dirname(__file__)
 
 # --------------------------------------------------
 # Constants
 # --------------------------------------------------
-LLM_MODEL = 'bedrock/us.amazon.nova-lite-v1:0'
 VALID_UIDS = ['[EDU_01]', '[TOP_02]', '[EMO_03]', '[BRD_04]', '[GEN_05]']
 
 CATEGORY_LABELS = {
@@ -47,8 +24,15 @@ CATEGORY_LABELS = {
     '[GEN_05]': 'General',
 }
 
-# AWS region: read from AWS_DEFAULT_REGION and validate it, without ever
-# printing the value (so a misplaced secret can't leak into the logs)
+# Used only if the label-encoder file is missing: LabelEncoder sorts labels
+# alphabetically, so 0..4 map to this order (verify against your notebook)
+FALLBACK_CLASSES = ['BRD_04', 'EDU_01', 'EMO_03', 'GEN_05', 'TOP_02']
+
+BLOB_URL = "https://itf8egqp4iag2pr5.private.blob.vercel-storage.com/celm_rf_model.joblib"
+
+# --------------------------------------------------
+# AWS Bedrock settings (set CELM_BEDROCK_KEY in Vercel; never put it in code)
+# --------------------------------------------------
 _region = os.environ.get("AWS_DEFAULT_REGION", "us-east-1").strip()
 if re.fullmatch(r"[a-z]{2}-[a-z]+-\d", _region):
     AWS_REGION = _region
@@ -56,12 +40,17 @@ else:
     print("Warning: AWS_DEFAULT_REGION is not a valid region; using us-east-1")
     AWS_REGION = "us-east-1"
 
-# Used only if the encoder file is missing: LabelEncoder sorts labels
-# alphabetically, so 0..4 map to this order (verify against your notebook)
-FALLBACK_CLASSES = ['BRD_04', 'EDU_01', 'EMO_03', 'GEN_05', 'TOP_02']
+BEDROCK_KEY = os.environ.get("CELM_BEDROCK_KEY", "").strip()
+print("CELM Bedrock key present:", bool(BEDROCK_KEY))
+
+BEDROCK_MODEL_ID = "us.amazon.nova-lite-v1:0"
+BEDROCK_URL = (
+    f"https://bedrock-runtime.{AWS_REGION}.amazonaws.com/model/"
+    f"{BEDROCK_MODEL_ID}/converse"
+)
 
 # --------------------------------------------------
-# PIPELINE A — signal dictionaries (from Experiment 4 script)
+# PIPELINE A: signal dictionaries (from the Experiment 4 script)
 # --------------------------------------------------
 EDU_SIGNALS = {
     'USA': ['1st grade', 'first grade', 'grade 1', '2nd grade', 'grade 2', 'kindergarten', 'k-4'],
@@ -107,22 +96,62 @@ CELM_PROMPT = (
     "Return ONLY the Universal ID including square brackets. Example: [EDU_01]"
 )
 
+
 def calculate_signal_strength(title, country='USA'):
     score = 1
     t = str(title).lower()
-    if any(k in t for k in EDU_SIGNALS.get(country, [])): score += 5
-    if any(k in t for k in TOPIC_SIGNALS): score += 3
-    if any(k in t for k in EMO_SIGNALS): score += 3
-    if any(k in t for k in BRAND_SIGNALS): score += 4
+    if any(k in t for k in EDU_SIGNALS.get(country, [])):
+        score += 5
+    if any(k in t for k in TOPIC_SIGNALS):
+        score += 3
+    if any(k in t for k in EMO_SIGNALS):
+        score += 3
+    if any(k in t for k in BRAND_SIGNALS):
+        score += 4
     return max(1, min(10, score))
+
 
 def predict_pipeline_a(title, country='USA'):
     t = str(title).lower()
-    if any(k in t for k in EDU_SIGNALS.get(country, [])): return '[EDU_01]'
-    if any(k in t for k in BRAND_SIGNALS): return '[BRD_04]'
-    if any(k in t for k in EMO_SIGNALS): return '[EMO_03]'
-    if any(k in t for k in TOPIC_SIGNALS): return '[TOP_02]'
+    if any(k in t for k in EDU_SIGNALS.get(country, [])):
+        return '[EDU_01]'
+    if any(k in t for k in BRAND_SIGNALS):
+        return '[BRD_04]'
+    if any(k in t for k in EMO_SIGNALS):
+        return '[EMO_03]'
+    if any(k in t for k in TOPIC_SIGNALS):
+        return '[TOP_02]'
     return '[GEN_05]'
+
+
+# --------------------------------------------------
+# Model loading: done on the first request, not at import time, so a loading
+# problem gives a readable error instead of a bare 500 page
+# --------------------------------------------------
+_models = {}
+
+
+def get_models():
+    if _models:
+        return _models
+
+    _models["vectorizer"] = joblib.load(
+        os.path.join(BASE_DIR, "../model/celm_tfidf_vectorizer.joblib"))
+
+    encoder_path = os.path.join(BASE_DIR, "../model/celm_label_encoder.joblib")
+    _models["encoder"] = joblib.load(encoder_path) if os.path.exists(encoder_path) else None
+
+    token = os.environ["BLOB_READ_WRITE_TOKEN"]
+    req = urllib.request.Request(BLOB_URL, headers={"Authorization": f"Bearer {token}"})
+    with urllib.request.urlopen(req, timeout=60) as resp:
+        rf_bytes = resp.read()
+    _models["rf"] = joblib.load(io.BytesIO(rf_bytes))
+    del rf_bytes
+
+    print("RF classes:", list(_models["rf"].classes_),
+          "| encoder loaded:", _models["encoder"] is not None)
+    return _models
+
 
 # --------------------------------------------------
 # Pipeline B: decode the forest's output into bracketed UIDs
@@ -131,28 +160,36 @@ def to_bracketed(label):
     s = str(label).strip()
     return s if s.startswith('[') else '[' + s + ']'
 
-def decode_prediction(pred):
+
+def decode_prediction(pred, encoder):
     s = str(pred).strip()
     if s.startswith('['):
         return s
     if s.isdigit():
         idx = int(s)
-        if label_encoder is not None:
-            return to_bracketed(label_encoder.inverse_transform([idx])[0])
+        if encoder is not None:
+            return to_bracketed(encoder.inverse_transform([idx])[0])
         if idx < len(FALLBACK_CLASSES):
             return to_bracketed(FALLBACK_CLASSES[idx])
     return to_bracketed(s)
 
+
 def predict_pipeline_b(title, signal_strength):
-    tfidf_vec = vectorizer.transform([title])
+    m = get_models()
+    tfidf_vec = m["vectorizer"].transform([title])
     ss_norm = np.array([[signal_strength / 10.0]])
     full_vec = sp.hstack([tfidf_vec, ss_norm])
-    return decode_prediction(rf_model.predict(full_vec)[0])
+    return decode_prediction(m["rf"].predict(full_vec)[0], m["encoder"])
+
 
 # --------------------------------------------------
-# LLM tie-breaker (returns the answer plus a status)
+# LLM tie-breaker (direct Bedrock call with an API key; returns answer + status)
 # --------------------------------------------------
 def predict_llm_tiebreaker(title, uid_a, uid_b, signal_strength):
+    if not BEDROCK_KEY:
+        print("LLM skipped: CELM_BEDROCK_KEY is not set")
+        return uid_b, "not_configured"
+
     tie_break_prompt = CELM_PROMPT + (
         f"\n\nTWO CLASSIFIERS DISAGREE ON THIS TITLE.\n"
         f"Rule-based evidence system proposed: {uid_a} (Signal Strength: {signal_strength}/10)\n"
@@ -185,6 +222,7 @@ def predict_llm_tiebreaker(title, uid_a, uid_b, signal_strength):
     except Exception as e:
         print(f"LLM error: {str(e)[:200]}")
         return uid_b, "error"
+
 
 # --------------------------------------------------
 # Full classification
@@ -225,8 +263,9 @@ def classify_title(title, country='USA'):
         "explanation": note,
     }
 
+
 # --------------------------------------------------
-# HTTP handler
+# HTTP handler (Vercel entry point)
 # --------------------------------------------------
 class handler(BaseHTTPRequestHandler):
     def _send(self, code, payload):
@@ -250,5 +289,5 @@ class handler(BaseHTTPRequestHandler):
             print(json.dumps(result, ensure_ascii=False))   # request log for monitoring
             self._send(200, result)
         except Exception as e:
-            print(f"Classification error: {str(e)[:300]}")
+            print(f"Classification error: {type(e).__name__}: {str(e)[:300]}")
             self._send(500, {"error": "Classification failed. Please try again."})
