@@ -31,23 +31,12 @@ FALLBACK_CLASSES = ['BRD_04', 'EDU_01', 'EMO_03', 'GEN_05', 'TOP_02']
 BLOB_URL = "https://itf8egqp4iag2pr5.private.blob.vercel-storage.com/celm_rf_model.joblib"
 
 # --------------------------------------------------
-# AWS Bedrock settings (set CELM_BEDROCK_KEY in Vercel; never put it in code)
+# OpenAI tie-breaker settings (set in Vercel; never put keys in code)
 # --------------------------------------------------
-_region = os.environ.get("AWS_DEFAULT_REGION", "us-east-1").strip()
-if re.fullmatch(r"[a-z]{2}-[a-z]+-\d", _region):
-    AWS_REGION = _region
-else:
-    print("Warning: AWS_DEFAULT_REGION is not a valid region; using us-east-1")
-    AWS_REGION = "us-east-1"
-
-BEDROCK_KEY = os.environ.get("CELM_BEDROCK_KEY", "").strip()
-print("CELM Bedrock key present:", bool(BEDROCK_KEY))
-
-BEDROCK_MODEL_ID = "us.amazon.nova-lite-v1:0"
-BEDROCK_URL = (
-    f"https://bedrock-runtime.{AWS_REGION}.amazonaws.com/model/"
-    f"{BEDROCK_MODEL_ID}/converse"
-)
+OPENAI_KEY = os.environ.get("CELM_OPENAI_KEY", "").strip()
+OPENAI_MODEL = os.environ.get("CELM_OPENAI_MODEL", "").strip()
+OPENAI_URL = "https://api.openai.com/v1/chat/completions"
+print("CELM OpenAI key present:", bool(OPENAI_KEY), "| model:", OPENAI_MODEL or "(not set)")
 
 # --------------------------------------------------
 # PIPELINE A: signal dictionaries (from the Experiment 4 script)
@@ -186,8 +175,8 @@ def predict_pipeline_b(title, signal_strength):
 # LLM tie-breaker (direct Bedrock call with an API key; returns answer + status)
 # --------------------------------------------------
 def predict_llm_tiebreaker(title, uid_a, uid_b, signal_strength):
-    if not BEDROCK_KEY:
-        print("LLM skipped: CELM_BEDROCK_KEY is not set")
+    if not OPENAI_KEY or not OPENAI_MODEL:
+        print("LLM skipped: CELM_OPENAI_KEY or CELM_OPENAI_MODEL is not set")
         return uid_b, "not_configured"
 
     tie_break_prompt = CELM_PROMPT + (
@@ -199,19 +188,22 @@ def predict_llm_tiebreaker(title, uid_a, uid_b, signal_strength):
         f"Return ONLY the Universal ID."
     )
     body = json.dumps({
-        "system": [{"text": tie_break_prompt}],
-        "messages": [{"role": "user", "content": [{"text": f'Title: "{title}"'}]}],
-        "inferenceConfig": {"maxTokens": 10, "temperature": 0.0},
+        "model": OPENAI_MODEL,
+        "messages": [
+            {"role": "system", "content": tie_break_prompt},
+            {"role": "user", "content": f'Title: "{title}"'},
+        ],
+        "max_completion_tokens": 200,
     }).encode()
     req = urllib.request.Request(
-        BEDROCK_URL, data=body, method="POST",
+        OPENAI_URL, data=body, method="POST",
         headers={"Content-Type": "application/json",
-                 "Authorization": f"Bearer {BEDROCK_KEY}"},
+                 "Authorization": f"Bearer {OPENAI_KEY}"},
     )
     try:
         with urllib.request.urlopen(req, timeout=20) as resp:
             out = json.loads(resp.read())
-        text = out["output"]["message"]["content"][0]["text"]
+        text = out["choices"][0]["message"]["content"] or ""
         uid = to_bracketed(text.strip().split("\n")[0])
         if uid in VALID_UIDS:
             return uid, "ok"
