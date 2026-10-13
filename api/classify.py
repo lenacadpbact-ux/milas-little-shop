@@ -35,7 +35,9 @@ BLOB_URL = "https://itf8egqp4iag2pr5.private.blob.vercel-storage.com/celm_rf_mod
 # --------------------------------------------------
 OPENAI_KEY = os.environ.get("CELM_OPENAI_KEY", "").strip()
 OPENAI_MODEL = os.environ.get("CELM_OPENAI_MODEL", "").strip()
-OPENAI_URL = "https://api.openai.com/v1/chat/completions"
+#OPENAI_URL = "https://api.openai.com/v1/chat/completions"
+OPENAI_URL = "https://api.openai.com/v1/responses"
+OPENAI_SETTINGS = {"reasoning": {"effort": "low"}, "max_output_tokens": 4000}
 print("CELM OpenAI key present:", bool(OPENAI_KEY), "| model:", OPENAI_MODEL or "(not set)")
 
 # --------------------------------------------------
@@ -174,6 +176,16 @@ def predict_pipeline_b(title, signal_strength):
 # --------------------------------------------------
 # LLM tie-breaker (direct Bedrock call with an API key; returns answer + status)
 # --------------------------------------------------
+def extract_text(out):
+    texts = []
+    for item in out.get("output", []):
+        if item.get("type") == "message":
+            for c in item.get("content", []):
+                if c.get("type") == "output_text":
+                    texts.append(c.get("text", ""))
+    return "".join(texts)
+
+
 def predict_llm_tiebreaker(title, uid_a, uid_b, signal_strength):
     if not OPENAI_KEY or not OPENAI_MODEL:
         print("LLM skipped: CELM_OPENAI_KEY or CELM_OPENAI_MODEL is not set")
@@ -187,24 +199,21 @@ def predict_llm_tiebreaker(title, uid_a, uid_b, signal_strength):
         f"two candidates is correct, or select a different Universal ID if neither fits.\n"
         f"Return ONLY the Universal ID."
     )
-    body = json.dumps({
-        "model": OPENAI_MODEL,
-        "messages": [
-            {"role": "system", "content": tie_break_prompt},
-            {"role": "user", "content": f'Title: "{title}"'},
-        ],
-        "max_completion_tokens": 200,
-    }).encode()
+    body = {"model": OPENAI_MODEL, "instructions": tie_break_prompt,
+            "input": f'Title: "{title}"'}
+    body.update(OPENAI_SETTINGS)
     req = urllib.request.Request(
-        OPENAI_URL, data=body, method="POST",
+        OPENAI_URL, data=json.dumps(body).encode(), method="POST",
         headers={"Content-Type": "application/json",
                  "Authorization": f"Bearer {OPENAI_KEY}"},
     )
     try:
-        with urllib.request.urlopen(req, timeout=20) as resp:
+        with urllib.request.urlopen(req, timeout=25) as resp:
             out = json.loads(resp.read())
-        text = out["choices"][0]["message"]["content"] or ""
-        uid = to_bracketed(text.strip().split("\n")[0])
+        if out.get("status") not in (None, "completed"):
+            print("LLM incomplete:", out.get("incomplete_details") or out.get("error"))
+            return uid_b, "error"
+        uid = to_bracketed(extract_text(out).strip().split("\n")[0])
         if uid in VALID_UIDS:
             return uid, "ok"
         return uid_b, "invalid_response"
