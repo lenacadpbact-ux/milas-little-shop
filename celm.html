@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Try CELM | Adventures of Mila</title>
+<meta name="description" content="Try the CELM classifier: type a children's book title, choose a market, and see which of five categories it falls into.">
+<link rel="canonical" href="https://celm-shop.com/celm.html">
+<link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+<style>
+@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}}
+html { overflow-y: scroll; scrollbar-width: auto; scrollbar-color: #f3c31b #f6f3eb; }
+::-webkit-scrollbar { width: 14px; }
+::-webkit-scrollbar-track { background: #f6f3eb; }
+::-webkit-scrollbar-thumb { background: #f3c31b; border-radius: 8px; border: 3px solid #f6f3eb; }
+::-webkit-scrollbar-thumb:hover { background: #dca707; }
+</style>
+<script src="https://cdn.tailwindcss.com"></script>
+<script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "background": "#fcf9f1", "on-secondary": "#ffffff", "on-tertiary-fixed-variant": "#1d4f40", "on-tertiary": "#ffffff", "on-surface-variant": "#4e4633", "surface-dim": "#dcdad2", "error-container": "#ffdad6", "error": "#ba1a1a", "on-primary-fixed": "#241a00", "primary-container": "#f3c31b", "surface-container-highest": "#e5e2db", "inverse-surface": "#31312b", "secondary-fixed": "#ffdbca", "on-tertiary-container": "#2c5d4d", "surface-container-high": "#ebe8e0", "on-secondary-container": "#79533e", "outline": "#807660", "inverse-primary": "#f0c117", "tertiary-fixed-dim": "#9ed1bd", "tertiary": "#376757", "surface-container": "#f1eee6", "tertiary-fixed": "#baeed9", "on-primary": "#ffffff", "surface-variant": "#e5e2db", "surface": "#fcf9f1", "inverse-on-surface": "#f3f1e9", "surface-tint": "#745b00", "primary-fixed-dim": "#f0c117", "secondary-fixed-dim": "#eebca2", "on-error-container": "#93000a", "outline-variant": "#d1c5ac", "tertiary-container": "#a1d4c0", "on-secondary-fixed-variant": "#623e2b", "on-background": "#1c1c17", "surface-container-lowest": "#ffffff", "on-surface": "#1c1c17", "on-secondary-fixed": "#2f1405", "secondary": "#7c5641", "surface-container-low": "#f6f3eb", "surface-bright": "#fcf9f1", "on-tertiary-fixed": "#002117", "primary-fixed": "#ffe08c", "on-primary-fixed-variant": "#584400", "secondary-container": "#fdc9af", "on-primary-container": "#685100", "primary": "#745b00", "on-error": "#ffffff" }, "borderRadius": { "DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px" }, "spacing": { "space-xs": "0.375rem", "gutter": "1.5rem", "margin-mobile": "1.25rem", "margin": "2.5rem", "space-lg": "2rem", "space-md": "1.25rem", "space-xl": "3rem", "gutter-mobile": "1rem", "space-sm": "0.75rem" }, "fontFamily": { "display-hero": [ "Plus Jakarta Sans" ], "headline-lg": [ "Plus Jakarta Sans" ], "display-hero-mobile": [ "Plus Jakarta Sans" ], "label-md": [ "Plus Jakarta Sans" ], "label-sm": [ "Plus Jakarta Sans" ], "body-md": [ "Plus Jakarta Sans" ], "label-lg": [ "Plus Jakarta Sans" ], "headline-sm": [ "Plus Jakarta Sans" ], "headline-md": [ "Plus Jakarta Sans" ], "headline-lg-mobile": [ "Plus Jakarta Sans" ], "body-lg": [ "Plus Jakarta Sans" ] }, "fontSize": { "display-hero": [ "40px", { "lineHeight": "52px", "letterSpacing": "-0.02em", "fontWeight": "800" } ], "headline-lg": [ "32px", { "lineHeight": "42px", "letterSpacing": "-0.01em", "fontWeight": "700" } ], "display-hero-mobile": [ "30px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "800" } ], "label-md": [ "13px", { "lineHeight": "18px", "letterSpacing": "0.04em", "fontWeight": "700" } ], "label-sm": [ "11px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" } ], "body-md": [ "16px", { "lineHeight": "24px", "letterSpacing": "0.01em", "fontWeight": "500" } ], "label-lg": [ "15px", { "lineHeight": "20px", "letterSpacing": "0.03em", "fontWeight": "700" } ], "headline-sm": [ "20px", { "lineHeight": "28px", "letterSpacing": "0em", "fontWeight": "600" } ], "headline-md": [ "24px", { "lineHeight": "32px", "letterSpacing": "0em", "fontWeight": "700" } ], "headline-lg-mobile": [ "26px", { "lineHeight": "34px", "letterSpacing": "0em", "fontWeight": "700" } ], "body-lg": [ "18px", { "lineHeight": "28px", "letterSpacing": "0.01em", "fontWeight": "500" } ] } } } };</script>
+</head>
+<body class="bg-surface font-body-md text-on-surface antialiased selection:bg-primary-container selection:text-on-primary-container">
+
+<header class="fixed top-0 w-full z-50 bg-surface/85 backdrop-blur-xl shadow-[0_2px_12px_rgba(90,56,37,0.06)]"><div class="h-20 w-full px-margin-mobile lg:px-margin flex items-center justify-between"><a class="flex items-center gap-space-sm group" href="/"><div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center shadow-[0_3px_0_#c0950e] group-hover:translate-y-0.5 transition-transform"><span class="material-symbols-outlined text-on-primary-container text-[22px]">auto_stories</span></div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-on-surface leading-none tracking-tight">Adventures of Mila</span><span class="font-label-sm text-label-sm text-secondary tracking-wide uppercase mt-0.5">By Len Balunan</span></div></a> <nav class="hidden lg:flex items-center gap-space-xs p-1.5 rounded-full bg-surface-container-low"><a class="px-space-md py-space-xs font-label-lg text-label-lg rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all" href="/#collection-grid">Book Collection</a><a class="px-space-md py-space-xs font-label-lg text-label-lg rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all" href="https://www.amazon.com/stores/Len-B/author/B0GCBHH55Y?ref=ap_rdr&amp;shoppingPortalEnabled=true&amp;" rel="noopener noreferrer" target="_blank">About Author</a><a class="px-space-md py-space-xs font-label-lg text-label-lg rounded-full bg-primary-container text-on-primary-container shadow-[0_2px_0_#c0950e]" href="/celm.html">Try CELM</a></nav>
+<div class="flex items-center gap-space-sm"><a class="hidden sm:inline-flex items-center gap-space-xs px-space-md py-space-xs rounded-full bg-secondary text-on-secondary font-label-md text-label-md shadow-[0_3px_0_#5a3825] hover:translate-y-0.5 transition-all" href="https://www.amazon.com/stores/author/B0GCBHH55Y/allbooks?_encoding=UTF8&amp;" rel="noopener noreferrer" target="_blank"><span class="material-symbols-outlined text-[18px]">shopping_bag</span><span>Shop on Amazon</span></a><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header>
+
+<main class="w-full pt-20 bg-surface min-h-[calc(100vh-20rem)]">
+<section class="w-full py-space-xl px-margin-mobile lg:px-margin" id="celm-demo">
+  <div class="max-w-3xl mx-auto rounded-DEFAULT bg-surface-container-lowest p-space-lg shadow-md">
+    <span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Research demo</span>
+    <h1 class="font-headline-md text-headline-md text-on-surface mt-1">Try the CELM classifier</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant mt-space-xs">
+      CELM is the system behind this site's book metadata. Type a children's book title, choose a market,
+      and it sorts the title into one of five categories: Grade-Specific, Topic-Specific, Emotive,
+      Brand-Specific or General.
+    </p>
+
+    <form id="celm-form" class="mt-space-md flex flex-col gap-space-sm">
+      <div>
+        <label for="celm-title" class="font-label-md text-label-md text-on-surface block mb-1">Book title</label>
+        <input id="celm-title" type="text" maxlength="200" required
+               placeholder="e.g. Year 2 Reading Workbook"
+               class="w-full rounded-DEFAULT border border-outline-variant bg-surface px-space-sm py-space-xs font-body-md text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary-container">
+      </div>
+      <div>
+        <label for="celm-country" class="font-label-md text-label-md text-on-surface block mb-1">Market</label>
+        <select id="celm-country"
+                class="w-full rounded-DEFAULT border border-outline-variant bg-surface px-space-sm py-space-xs font-body-md text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary-container">
+          <option value="USA">United States</option>
+          <option value="UK">United Kingdom</option>
+          <option value="NZ">New Zealand</option>
+          <option value="AU">Australia</option>
+          <option value="PH">Philippines</option>
+          <option value="JP">Japan</option>
+          <option value="CN">China</option>
+        </select>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-space-xs">
+        <button id="celm-btn" type="submit"
+                class="px-space-md py-space-xs rounded-full bg-primary-container text-on-primary-container font-label-lg text-label-lg shadow-[0_3px_0_#c0950e] hover:translate-y-0.5 transition-all disabled:opacity-60">
+          Classify
+        </button>
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Try:</span>
+        <button type="button" class="celm-example px-space-sm py-1 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm hover:bg-surface-container-high"
+                data-title="Year 2 Reading Workbook" data-country="UK">Year 2 Reading Workbook</button>
+        <button type="button" class="celm-example px-space-sm py-1 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm hover:bg-surface-container-high"
+                data-title="Bluey: Sleepytime" data-country="AU">Bluey: Sleepytime</button>
+        <button type="button" class="celm-example px-space-sm py-1 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm hover:bg-surface-container-high"
+                data-title="Our World Atlas: Maps and Countries for Kids" data-country="USA">World atlas for kids</button>
+      </div>
+    </form>
+
+    <div id="celm-out" aria-live="polite" class="mt-space-md"></div>
+
+    <p class="font-label-sm text-label-sm text-on-surface-variant mt-space-md">
+      In testing, CELM got about 76 in 100 titles right on unseen titles. Treat the result as a suggestion, not a final label.
+    </p>
+  </div>
+
+  <script>
+  (function () {
+    var form = document.getElementById("celm-form");
+    var btn = document.getElementById("celm-btn");
+    var out = document.getElementById("celm-out");
+    var titleBox = document.getElementById("celm-title");
+    var countryBox = document.getElementById("celm-country");
+
+    function line(label, value) {
+      var p = document.createElement("p");
+      p.className = "font-body-md text-body-md text-on-surface-variant";
+      var b = document.createElement("strong");
+      b.className = "text-on-surface";
+      b.textContent = label + ": ";
+      p.appendChild(b);
+      p.appendChild(document.createTextNode(value));
+      return p;
+    }
+    function show(nodes) { out.replaceChildren.apply(out, nodes); }
+
+    document.querySelectorAll(".celm-example").forEach(function (el) {
+      el.addEventListener("click", function () {
+        titleBox.value = el.getAttribute("data-title");
+        countryBox.value = el.getAttribute("data-country");
+        form.requestSubmit();
+      });
+    });
+
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      var title = titleBox.value.trim();
+      if (!title) return;
+
+      btn.disabled = true;
+      btn.textContent = "Classifying...";
+      show([line("Status", "Working. The first request can take a few seconds.")]);
+
+      // encodeURIComponent keeps characters like & : # ' safe in the address
+      var url = "/api/classify?title=" + encodeURIComponent(title) +
+                "&country=" + encodeURIComponent(countryBox.value);
+      try {
+        var res = await fetch(url);
+        var data = await res.json();
+        if (!res.ok) {
+          show([line("Sorry", data.error || "Something went wrong. Please try again.")]);
+          return;
+        }
+        var head = document.createElement("p");
+        head.className = "font-headline-sm text-headline-sm text-on-surface rounded-DEFAULT bg-primary-container/40 px-space-sm py-space-xs inline-block mb-space-xs";
+        head.textContent = data.final_label;
+        show([
+          head,
+          line("Rules said", data.pipeline_a_label),
+          line("Statistical model said", data.pipeline_b_label),
+          line("Decision", data.explanation)
+        ]);
+      } catch (err) {
+        show([line("Sorry", "Could not reach the classifier. Please try again.")]);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Classify";
+      }
+    });
+  })();
+  </script>
+</section>
+</main>
+
+<footer class="w-full bg-surface-container-low py-space-lg border-t border-outline-variant/30"><div class="w-full px-margin-mobile lg:px-margin flex flex-col sm:flex-row items-center justify-between gap-space-sm text-center sm:text-left"><p class="font-label-sm text-label-sm text-on-surface-variant">© 2026 Len Balunan. Adventures of Mila. All rights reserved.</p><a class="font-label-sm text-label-sm text-secondary hover:text-on-surface transition-colors" href="/">Back to the book collection</a></div></footer>
+
+</body>
+</html>
