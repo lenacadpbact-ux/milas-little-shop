@@ -272,6 +272,8 @@ class handler(BaseHTTPRequestHandler):
     def _send(self, code, payload):
         self.send_response(code)
         self.send_header('Content-type', 'application/json')
+        if code == 200:
+            self.send_header('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=86400')
         self.end_headers()
         self.wfile.write(json.dumps(payload, ensure_ascii=False).encode())
 
