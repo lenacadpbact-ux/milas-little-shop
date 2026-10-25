@@ -473,6 +473,35 @@ html {
       });
     });
   })();
+</script>
+<script>
+  // Shows the CELM label on each book. Vercel caches each result for a day, so this is about six model calls a day.
+  (function () {
+    var titles = {
+      "book-1": "My Heart Has Two Homes",
+      "book-2": "Mila's Journey",
+      "book-3a": "Remembering My Dogs: Mila & Tentay",
+      "book-3b": "Remembering My Dogs: Mila & Coffee",
+      "book-1a": "Mila's World Adventure: Cities & Landmarks",
+      "book-1b": "Mila's World Adventure: National Parks & Wild Frontiers"
+    };
+    Object.keys(titles).forEach(function (id) {
+      var card = document.getElementById(id);
+      if (!card) return;
+      var h3 = card.querySelector("h3");
+      if (!h3) return;
+      fetch("/api/classify?country=USA&title=" + encodeURIComponent(titles[id]))
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+          if (!d || !d.final_label) return;
+          var tag = document.createElement("span");
+          tag.className = "inline-block px-2 py-0.5 mb-space-xs rounded-full bg-primary-container/40 text-on-primary-container font-label-sm text-[11px]";
+          tag.textContent = "CELM: " + d.final_label;
+          h3.insertAdjacentElement("afterend", tag);
+        })
+        .catch(function () {});
+    });
+  })();
 </script></main><footer class="w-full bg-surface-container-low py-space-xl border-t border-outline-variant/30"><div class="w-full px-margin-mobile lg:px-margin"><div class="grid grid-cols-1 md:grid-cols-4 gap-space-lg mb-space-xl"><div class="md:col-span-2 flex flex-col gap-space-sm"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center"><span class="material-symbols-outlined text-on-primary-container text-[18px]">menu_book</span></div><span class="font-headline-sm text-headline-sm text-on-surface">Adventures of Mila</span></div><p class="font-body-md text-body-md text-on-surface-variant max-w-md">Mila's story follows a young girl learning what home really means — through family, friendship, love, and belonging. She moves to a new country, makes new friends, and works through the loss of her beloved dogs, slowly finding her way back to loving again. As her journey grows, so does her world — she explores new cities, famous landmarks, national parks, and the wonders of nature along the way.</p></div><div class="flex flex-col gap-space-xs"><span class="font-label-lg text-label-lg text-on-surface mb-space-xs uppercase tracking-wider">The Collection</span><a class="font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="book-collection" href="#collection-grid">6-Book Odyssey</a><a class="font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="travel-regions" href="#book-1">New Zealand Escapades</a><a class="font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="travel-regions" href="#book-2">Philippines Discoveries</a><a class="font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="travel-regions" href="#book-1a">United States Journeys</a></div><div class="flex flex-col gap-space-xs"><span class="font-label-lg text-label-lg text-on-surface mb-space-xs uppercase tracking-wider">Connect &amp; Explore</span><a class="font-body-md text-body-md text-secondary hover:text-on-surface transition-colors flex items-center gap-1" href="https://www.instagram.com/myhearthastwohomes/" rel="noopener noreferrer" target="_blank"><span class="material-symbols-outlined text-[16px]">open_in_new</span>Mila on Instagram</a><a class="font-body-md text-body-md text-secondary hover:text-on-surface transition-colors flex items-center gap-1 mt-space-xs" href="https://www.amazon.com/stores/author/B0GCBHH55Y?ingress=0&amp;visitId=4b2c5cee-11e3-42c6-b5ca-43d3e9f1fb9d" rel="noopener noreferrer" target="_blank"><span class="material-symbols-outlined text-[16px]">open_in_new</span>Amazon Storefront</a></div></div><div class="pt-space-md border-t border-outline-variant/20 flex flex-col sm:flex-row items-center justify-between gap-space-sm text-center sm:text-left"><p class="font-label-sm text-label-sm text-on-surface-variant">© 2026 Len Balunan. Adventures of Mila. All rights reserved.</p><div class="flex items-center gap-space-md"><span class="font-label-sm text-label-sm text-on-surface-variant">Crafted for young curious minds &amp; their guides</span></div></div></div></footer>
 
 
