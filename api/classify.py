@@ -11,6 +11,8 @@ import scipy.sparse as sp
 
 BASE_DIR = os.path.dirname(__file__)
 
+CELM_VERSION = "v2.1-candidate"   # appears in every Vercel log line and API response
+
 # --------------------------------------------------
 # Constants
 # --------------------------------------------------
@@ -64,20 +66,39 @@ BRAND_SIGNALS = ['mila', 'morphle', 'julia donaldson', 'roald dahl', 'jeannie ba
                  'bluey', 'dog man', 'adarna', 'lola basyang', 'lampara',
                  'anvil publishing', 'tahanan books', 'rene villanueva']
 
+# --------------------------------------------------
+# v2.1 additions: terms found in the reviewed data (Experiment 3).
+# phonics and the Chinese word for history were tested on Experiment 4 and removed.
+# --------------------------------------------------
+V2_EDU_ADD = {
+    'NZ':  ['ncea'],
+    'AU':  ['naplan'],
+    'UK':  ['year 3'],
+    'USA': ['3rd grade', 'pre-k', 'common core'],
+}
+V2_TOPIC_ADD = ['pūtaiao', 'putaiao', 'pāngarau', 'pangarau', '図鑑',
+                'edukasyon sa pagpapakatao']
+V2_EMO_ADD = ['aroha', 'whānau', 'whanau', 'ともだち', 'kindness']
+
+for _c, _terms in V2_EDU_ADD.items():
+    EDU_SIGNALS[_c] = EDU_SIGNALS[_c] + _terms
+TOPIC_SIGNALS = TOPIC_SIGNALS + V2_TOPIC_ADD
+EMO_SIGNALS = EMO_SIGNALS + V2_EMO_ADD
+
 CELM_PROMPT = (
     "You are CELM — assign exactly one Universal ID to the given book title.\n\n"
     "[EDU_01] Grade-Specific — explicitly mentions a curriculum grade or year "
     "group: Year 1, Year 2, KS1, KS2, 1st Grade, 2nd Grade, kindergarten, "
-    "K-4, Baitang 1, Baitang 2, DepEd, K-12. Age ranges alone without a grade "
+    "K-4, Baitang 1, Baitang 2, DepEd, K-12, NCEA, NAPLAN, Year 3, 3rd Grade, Pre-K, Common Core. Age ranges alone without a grade "
     "term do not qualify.\n\n"
     "[TOP_02] Topic-Specific — focused on a curriculum subject or theme: "
     "geography, science, STEM, history, maths, world, landmarks, maps, "
-    "countries, culture, nature, Araling Panlipunan, Agham, Matematika. "
+    "countries, culture, nature, Araling Panlipunan, Agham, Matematika, Pūtaiao, Pāngarau, 図鑑. "
     "May include age ranges like Ages 6-8 alongside a topic.\n\n"
     "[EMO_03] Emotive/Resilience — social emotional themes: belonging, "
     "resilience, emotions, friendship, feelings, home, brave, courage, "
     "identity, inclusion, diversity, moving, new beginnings, Bayanihan, "
-    "Pagmamahal, Pagkakaibigan.\n\n"
+    "Pagmamahal, Pagkakaibigan, Aroha, Whānau, kindness, ともだち.\n\n"
     "[BRD_04] Brand-Specific — known children's book brands or authors: "
     "Mila, Morphle, Julia Donaldson, Roald Dahl, Jeannie Baker, Bluey, "
     "Adarna House, Lola Basyang, Lampara Books, Anvil Publishing.\n\n"
@@ -174,7 +195,7 @@ def predict_pipeline_b(title, signal_strength):
 
 
 # --------------------------------------------------
-# LLM tie-breaker (direct Bedrock call with an API key; returns answer + status)
+# LLM tie-breaker (OpenAI Responses API call; returns answer + status)
 # --------------------------------------------------
 def extract_text(out):
     texts = []
@@ -252,6 +273,7 @@ def classify_title(title, country='USA'):
             note = "The pipelines disagreed and the language model was unavailable, so the rule-based result was used."
 
     return {
+        "version": CELM_VERSION,
         "title": title,
         "country": country,
         "final_uid": final_uid,
@@ -272,8 +294,6 @@ class handler(BaseHTTPRequestHandler):
     def _send(self, code, payload):
         self.send_response(code)
         self.send_header('Content-type', 'application/json')
-        if code == 200:
-            self.send_header('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=86400')
         self.end_headers()
         self.wfile.write(json.dumps(payload, ensure_ascii=False).encode())
 
